@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  date      DateTime
+  type      String   // income / expense
+  amount    Int
+  category  String
+  remark    String?
+  createdAt DateTime @default(now())
+}
+
+model Receivable {
+  id             String   @id @default(cuid())
+  client         String
+  totalAmount    Int
+  receivedAmount Int      @default(0)
+  dueDate        DateTime?
+  remark         String?
+  createdAt      DateTime @default(now())
+}
+
+model Payable {
+  id          String   @id @default(cuid())
+  vendor      String
+  totalAmount Int
+  paidAmount  Int      @default(0)
+  dueDate     DateTime?
+  remark      String?
+  createdAt   DateTime @default(now())
+}

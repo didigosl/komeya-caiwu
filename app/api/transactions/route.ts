@@ -16,7 +16,6 @@ export async function POST(req: Request) {
       amount: Number(body.amount),
       type: body.type,
       remark: body.remark ?? '',
-      // ✅ 补必填字段
       date: body.date ? new Date(body.date) : new Date(),
       category: body.category ?? '未分类',
     },
@@ -24,4 +23,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json(row)
 }
-

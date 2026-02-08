@@ -26,27 +26,17 @@ export async function GET() {
 }
 
 /**
- * 新增交易
+ * 新增交易（最小安全字段版本）
  */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const {
-      amount,
-      type,
-      categoryId,
-      transactionDate,
-    } = body;
-
     const transaction = await prisma.transaction.create({
       data: {
-        amount,
-        type,
-        categoryId,
-        transactionDate: transactionDate
-          ? new Date(transactionDate)
-          : new Date(),
+        amount: body.amount,
+        type: body.type,
+        categoryId: body.categoryId,
       },
     });
 

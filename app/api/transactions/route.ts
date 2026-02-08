@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// 获取交易列表
+/**
+ * 获取交易列表
+ */
 export async function GET() {
   try {
     const transactions = await prisma.transaction.findMany({
@@ -23,7 +25,9 @@ export async function GET() {
   }
 }
 
-// 新增一条交易
+/**
+ * 新增交易
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -31,7 +35,6 @@ export async function POST(req: Request) {
     const {
       amount,
       type,
-      note,
       categoryId,
       transactionDate,
     } = body;
@@ -40,7 +43,6 @@ export async function POST(req: Request) {
       data: {
         amount,
         type,
-        note,
         categoryId,
         transactionDate: transactionDate
           ? new Date(transactionDate)

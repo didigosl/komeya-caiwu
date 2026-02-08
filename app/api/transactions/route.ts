@@ -1,52 +1,59 @@
-import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-/**
- * 查询流水
- */
+// 获取交易列表
 export async function GET() {
-  const list = await prisma.transaction.findMany({
-    orderBy: { date: 'desc' },
-    include: {
-      category: true,
+  try {
+    const transactions = await prisma.transaction.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
       include: {
-  category: true,
-}
-    },
-  })
+        category: true,
+      },
+    });
 
-  return Response.json(list)
-}
-
-/**
- * 新增记账
- */
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-
-  const {
-    type,        // 'income' | 'expense'
-    amount,
-    date,
-    categoryId,
-    paymentMethodId,
-    note,
-  } = body
-
-  if (!type || !amount || !date) {
-    return new Response('参数不完整', { status: 400 })
+    return NextResponse.json(transactions);
+  } catch (error) {
+    console.error("GET /api/transactions error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch transactions" },
+      { status: 500 }
+    );
   }
+}
 
-  const record = await prisma.transaction.create({
-    data: {
+// 新增一条交易
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+
+    const {
+      amount,
       type,
-      amount: Number(amount),
-      date: new Date(date),
-      categoryId: categoryId || null,
-      paymentMethodId: paymentMethodId || null,
-      note: note || '',
-    },
-  })
+      note,
+      categoryId,
+      transactionDate,
+    } = body;
 
-  return Response.json(record)
+    const transaction = await prisma.transaction.create({
+      data: {
+        amount,
+        type,
+        note,
+        categoryId,
+        transactionDate: transactionDate
+          ? new Date(transactionDate)
+          : new Date(),
+      },
+    });
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    console.error("POST /api/transactions error:", error);
+    return NextResponse.json(
+      { error: "Failed to create transaction" },
+      { status: 500 }
+    );
+  }
 }

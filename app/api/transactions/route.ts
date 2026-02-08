@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const transactions = await prisma.transaction.findMany({
       orderBy: {
-        createdAt: "desc",
+        date: "desc",
       },
       include: {
         category: true,
@@ -26,7 +26,7 @@ export async function GET() {
 }
 
 /**
- * 新增交易（最小安全字段版本）
+ * 新增交易（符合 Prisma CreateInput 的完整版本）
  */
 export async function POST(req: Request) {
   try {
@@ -36,7 +36,12 @@ export async function POST(req: Request) {
       data: {
         amount: body.amount,
         type: body.type,
-        categoryId: body.categoryId,
+        date: new Date(),
+        category: {
+          connect: {
+            id: body.categoryId,
+          },
+        },
       },
     });
 

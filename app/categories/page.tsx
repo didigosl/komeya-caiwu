@@ -1,145 +1,211 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
+import { useState } from "react";
+
+type SubCategory = {
+  id: string;
+  name: string;
+};
 
 type Category = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+  children: SubCategory[];
+};
 
-export default function CategoriesPage() {
-  const [list, setList] = useState<Category[]>([])
-  const [name, setName] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingName, setEditingName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export default function CategoryPage() {
+  const [categories, setCategories] = useState<Category[]>([
+    {
+      id: "income",
+      name: "收入",
+      children: [
+        { id: "i1", name: "股东入资（现金）" },
+        { id: "i2", name: "股东投资（银行）" },
+        { id: "i3", name: "银行借贷" },
+        { id: "i4", name: "现金借贷" },
+        { id: "i5", name: "订单收入" },
+        { id: "i6", name: "其它收入" },
+      ],
+    },
+    {
+      id: "expense",
+      name: "开支",
+      children: [
+        { id: "e1", name: "现金开支" },
+        { id: "e2", name: "员工工资" },
+        { id: "e3", name: "出差补助" },
+        { id: "e4", name: "人工开支" },
+        { id: "e5", name: "其它开支" },
+      ],
+    },
+  ]);
 
-  async function load() {
-    const res = await fetch('/api/categories', { cache: 'no-store' })
-    const data = await res.json()
-    setList(data)
+  /** 添加一级类目 */
+  function addCategory() {
+    const name = prompt("请输入一级类目名称");
+    if (!name) return;
+
+    setCategories([
+      ...categories,
+      {
+        id: Date.now().toString(),
+        name,
+        children: [],
+      },
+    ]);
   }
 
-  useEffect(() => {
-    load()
-  }, [])
+  /** 添加子类目 */
+  function addSub(categoryId: string) {
+    const name = prompt("请输入子类目名称");
+    if (!name) return;
 
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-
-    setLoading(true)
-    await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
-    setName('')
-    setLoading(false)
-    load()
+    setCategories(
+      categories.map((c) =>
+        c.id === categoryId
+          ? {
+              ...c,
+              children: [
+                ...c.children,
+                { id: Date.now().toString(), name },
+              ],
+            }
+          : c
+      )
+    );
   }
 
-  async function onDelete(id: string) {
-    if (!confirm('确定删除这个分类吗？')) return
-    await fetch(`/api/categories?id=${id}`, { method: 'DELETE' })
-    load()
+  /** 编辑名称 */
+  function editName(
+    categoryId: string,
+    subId?: string
+  ) {
+    const name = prompt("请输入新名称");
+    if (!name) return;
+
+    setCategories(
+      categories.map((c) => {
+        if (c.id !== categoryId) return c;
+
+        if (!subId) {
+          return { ...c, name };
+        }
+
+        return {
+          ...c,
+          children: c.children.map((s) =>
+            s.id === subId ? { ...s, name } : s
+          ),
+        };
+      })
+    );
   }
 
-  async function onSave(id: string) {
-    if (!editingName.trim()) return
-    await fetch('/api/categories', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name: editingName }),
-    })
-    setEditingId(null)
-    setEditingName('')
-    load()
+  /** 删除 */
+  function remove(
+    categoryId: string,
+    subId?: string
+  ) {
+    if (!confirm("确认删除？")) return;
+
+    setCategories(
+      categories
+        .map((c) => {
+          if (c.id !== categoryId) return c;
+
+          if (!subId) return null;
+
+          return {
+            ...c,
+            children: c.children.filter((s) => s.id !== subId),
+          };
+        })
+        .filter(Boolean) as Category[]
+    );
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 800,
-        margin: '40px auto',
-        fontFamily: '"Microsoft YaHei", sans-serif',
-        color: '#eaeaea',
-      }}
-    >
-      <h1 style={{ fontSize: 22, marginBottom: 16 }}>分类管理</h1>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-xl font-bold mb-4 text-white">
+        类目列表
+      </h1>
 
-      <form onSubmit={onCreate} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="输入分类名称"
-          style={{
-            flex: 1,
-            padding: '6px 10px',
-            background: '#1f1f1f',
-            border: '1px solid #555',
-            color: '#fff',
-          }}
-        />
-        <button type="submit" disabled={loading}>
-          新增
-        </button>
-      </form>
+      <button
+        onClick={addCategory}
+        className="mb-4 rounded bg-sky-500 px-4 py-2 text-white hover:bg-sky-600"
+      >
+        添加一级类目
+      </button>
 
-      <table width="100%" cellPadding={8} style={{ borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #555' }}>
-            <th align="left">名称</th>
-            <th align="left">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((c) => (
-            <tr key={c.id} style={{ borderBottom: '1px solid #333' }}>
-              <td>
-                {editingId === c.id ? (
-                  <input
-                    value={editingName}
-                    onChange={(e) => setEditingName(e.target.value)}
-                  />
-                ) : (
-                  c.name
-                )}
-              </td>
-              <td>
-                {editingId === c.id ? (
-                  <>
-                    <button onClick={() => onSave(c.id)}>保存</button>{' '}
-                    <button onClick={() => setEditingId(null)}>取消</button>
-                  </>
-                ) : (
-                  <>
+      <div className="space-y-4">
+        {categories.map((cat) => (
+          <div
+            key={cat.id}
+            className="rounded border border-white/10 bg-white/5 p-3"
+          >
+            {/* 一级类目 */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-white">
+                − {cat.name}
+              </div>
+
+              <div className="space-x-2">
+                <button
+                  onClick={() => addSub(cat.id)}
+                  className="rounded bg-emerald-500 px-2 py-1 text-white"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => editName(cat.id)}
+                  className="rounded bg-blue-500 px-2 py-1 text-white"
+                >
+                  ✎
+                </button>
+                <button
+                  onClick={() => remove(cat.id)}
+                  className="rounded bg-red-500 px-2 py-1 text-white"
+                >
+                  🗑
+                </button>
+              </div>
+            </div>
+
+            {/* 子类目 */}
+            <div className="space-y-2 pl-6">
+              {cat.children.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="flex items-center justify-between rounded bg-white/10 px-3 py-2"
+                >
+                  <span className="text-white">
+                    {sub.name}
+                  </span>
+
+                  <div className="space-x-2">
                     <button
-                      onClick={() => {
-                        setEditingId(c.id)
-                        setEditingName(c.name)
-                      }}
+                      onClick={() =>
+                        editName(cat.id, sub.id)
+                      }
+                      className="rounded bg-blue-500 px-2 py-1 text-white"
                     >
-                      编辑
-                    </button>{' '}
-                    <button
-                      disabled={c.name === '默认'}
-                      onClick={() => onDelete(c.id)}
-                    >
-                      删除
+                      ✎
                     </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <p style={{ marginTop: 12, color: '#aaa', fontSize: 13 }}>
-        说明：默认分类不可删除；若分类被交易引用，删除会失败。
-      </p>
+                    <button
+                      onClick={() =>
+                        remove(cat.id, sub.id)
+                      }
+                      className="rounded bg-red-500 px-2 py-1 text-white"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  )
+  );
 }

@@ -24,3 +24,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* 企业财务风：字体与基础样式 */
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 输入框统一 */
+input, select, textarea {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+}
+
+input::placeholder {
+  color: #9ca3af;
+}
+
+/* 按钮基础风格 */
+button {
+  border-radius: 4px;
+}
+
+/* 表格线条清晰 */
+.table-border {
+  border: 1px solid #d1d5db;
+}

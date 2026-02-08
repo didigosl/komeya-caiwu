@@ -1,25 +1,50 @@
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+/**
+ * 查询流水
+ */
 export async function GET() {
   const list = await prisma.transaction.findMany({
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(list)
-}
-
-export async function POST(req: Request) {
-  const body = await req.json()
-
-  const row = await prisma.transaction.create({
-    data: {
-      amount: Number(body.amount),
-      type: body.type,
-      remark: body.remark ?? '',
-      date: body.date ? new Date(body.date) : new Date(),
-      category: body.category ?? '未分类',
+    orderBy: { date: 'desc' },
+    include: {
+      category: true,
+      paymentMethod: true,
     },
   })
 
-  return NextResponse.json(row)
+  return Response.json(list)
+}
+
+/**
+ * 新增记账
+ */
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+
+  const {
+    type,        // 'income' | 'expense'
+    amount,
+    date,
+    categoryId,
+    paymentMethodId,
+    note,
+  } = body
+
+  if (!type || !amount || !date) {
+    return new Response('参数不完整', { status: 400 })
+  }
+
+  const record = await prisma.transaction.create({
+    data: {
+      type,
+      amount: Number(amount),
+      date: new Date(date),
+      categoryId: categoryId || null,
+      paymentMethodId: paymentMethodId || null,
+      note: note || '',
+    },
+  })
+
+  return Response.json(record)
 }

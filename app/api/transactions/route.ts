@@ -9,7 +9,9 @@ export async function GET() {
     orderBy: { date: 'desc' },
     include: {
       category: true,
-      paymentMethod: true,
+      include: {
+  category: true,
+}
     },
   })
 
